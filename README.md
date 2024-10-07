@@ -5,7 +5,7 @@
 copy .env_template .env
 
 add STARROCKS_HOST value
-e.g STARROCKS_HOST=""starrocks://{user}:{load_balancer_host}:{port}/{database}""
+e.g STARROCKS_HOST="starrocks://{user}:{host}:{fe_port}/{database}"
 
 add BROKER_URL value
 e.g BROKER_URL="localhost:9092"
