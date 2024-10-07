@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "parry"
+version = "0.1.0"
+description = ""
+authors = ["David Cooper <dmcooper2412@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.8"
+starrocks = "1.0.6"
+mysql-connector-python = "^9.0.0"
+mysqlclient = "^2.2.4"
+python-dotenv = "^1.0.1"
+faker = "^28.4.1"
+kafka-python = "^2.0.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
