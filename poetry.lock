@@ -100,6 +100,24 @@ files = [
 crc32c = ["crc32c"]
 
 [[package]]
+name = "kafka-python-ng"
+version = "2.2.3"
+description = "Pure Python client for Apache Kafka"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "kafka_python_ng-2.2.3-py2.py3-none-any.whl", hash = "sha256:adc6e82147c441ca4ae1f22e291fc08efab0d10971cbd4aa1481d2ffa38e9480"},
+    {file = "kafka_python_ng-2.2.3.tar.gz", hash = "sha256:f79f28e10ade9b5a9860b2ec15b7cc8dc510d5702f5a399430478cff5f93a05a"},
+]
+
+[package.extras]
+boto = ["botocore"]
+crc32c = ["crc32c"]
+lz4 = ["lz4"]
+snappy = ["python-snappy"]
+zstd = ["zstandard"]
+
+[[package]]
 name = "mysql-connector-python"
 version = "9.0.0"
 description = "MySQL driver written in Python"
@@ -336,4 +354,4 @@ sqlalchemy-utils = ">=0.38.3,<0.39"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "4daf04a488092fea21e53f0226489d2871ed922102923f697a22f038ab93a634"
+content-hash = "4877afdfd4bd8d4a63c87b9351cf2ac771e85f4cef4409e6f95ae4b0420728dd"

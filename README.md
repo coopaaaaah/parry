@@ -39,8 +39,6 @@ This script will generate fresh data every time it is run. It will also delete t
 - It has multiple status' such as RUNNING, PAUSED, NEEDS SCHEDULE, etc.
 - It has a lot of underlying config, such as how many errors it will tolerate before it PAUSE's itself.
 
-<img width="1286" alt="image" src="https://github.com/user-attachments/assets/c3b50e71-472d-48f0-a4d7-d1c086fb21d8">
-
 ## Getting started (starts up FE node / BE node / Kafka / Inits Kafka Topic)
 ```
 docker compose up -d
@@ -51,16 +49,18 @@ This will create a `starrocks` directory. This will closely reflect what gets sp
 ```
 mysql>
 
-create table if not exists event_messages (
-  org_id bigint,
-  external_id varchar(128) NOT NULL,
+create table if not exists transactions (
+  department_id bigint,
+  request_id varchar(128) NOT NULL,
   created_at datetime NOT NULL default current_timestamp,
-  event_type varchar(128),
-  event_subtype varchar(128),
-  custom_data JSON
+  occurred_at datetime NOT NULL,
+  type varchar(128),
+  subtype varchar(128),
+  amount decimal,
+  metadata JSON
 )
-PRIMARY KEY (org_id, external_id)
-DISTRIBUTED BY HASH (org_id, external_id)
+PRIMARY KEY (department_id, request_id)
+DISTRIBUTED BY HASH (department_id, request_id)
 PROPERTIES( "replication_num" = "1" ); # important only for local, to bypass need for 3 BE nodes
 
 ```
@@ -69,12 +69,13 @@ PROPERTIES( "replication_num" = "1" ); # important only for local, to bypass nee
 ```
 mysql>
 
-CREATE ROUTINE LOAD heya.event_loading ON event_messages
-COLUMNS(org_id, external_id, created_at=now(), event_type, event_subtype, custom_data) -- important if you do not specify, it assumes ALL columns
+
+CREATE ROUTINE LOAD event_loading ON transactions
+COLUMNS(department_id, request_id, created_at=now(), occurred_at, type, subtype, amount, metadata) -- important if you do not specify, it assumes ALL columns
 PROPERTIES
 (
     "format" = "JSON",
-    "jsonpaths" ="[\"$.body.org_id\",\"$.body.req_data.general_data.event_id\",\"$.body.req_data.general_data.event_type\",\"$.body.req_data.general_data.event_subtype\",\"$.body.req_data.custom_data\"]" -- this is what it's looking for on the JSON object itself
+    "jsonpaths" ="[\"$.department_id\",\"$.req_id\",\"$.occurred_at\",\"$.type\",\"$.subtype\",\"$.amount\",\"$.metadata\"]" -- this is what it's looking for on the JSON object itself
 )
 FROM KAFKA
 (
@@ -105,7 +106,7 @@ I'm currently using 3.3.1
 
 send json file into kafka (after I downloaded from S3 or generated fake data)
 ```
-$KAFKA_LOCATION/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic transactions < src/data/txn_events/1/0b8c089b-eddf-4ec1-bbd4-7951fa8d6df7.json
+$KAFKA_LOCATION/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic transactions < src/data/transactions/1/8b5a8776-eea6-4a63-b307-eb574c8686c9.json
 ```
 
 
@@ -122,6 +123,47 @@ Dangerous, but I've also written up a bash line to iterate through the entire da
 for FILE in src/data/txn_events/1/*; do $KAFKA_LOCATION/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic transactions < $FILE; done
 ```
 
+If you run python 3.13 or higher (currently running myself), you may need to install a different version
+```
+poetry add kafka-python-ng
+```
+
+# End to End MySQL Instructions
+```
+create database accounting;
+use accounting;
+
+create table if not exists transactions (
+  department_id bigint,
+  request_id varchar(128) NOT NULL,
+  created_at datetime NOT NULL default current_timestamp,
+  occurred_at datetime NOT NULL,
+  type varchar(128),
+  subtype varchar(128),
+  amount decimal,
+  metadata JSON
+)
+PRIMARY KEY (department_id, request_id)
+DISTRIBUTED BY HASH (department_id, request_id)
+PROPERTIES( "replication_num" = "1" );
+
+CREATE ROUTINE LOAD event_loading ON transactions
+COLUMNS(department_id, request_id, created_at=now(), occurred_at, type, subtype, amount, metadata) -- important if you do not specify, it assumes ALL columns
+PROPERTIES
+(
+    "format" = "JSON",
+    "jsonpaths" ="[\"$.department_id\",\"$.req_id\",\"$.occurred_at\",\"$.type\",\"$.subtype\",\"$.amount\",\"$.metadata\"]" -- this is what it's looking for on the JSON object itself
+)
+FROM KAFKA
+(
+    "kafka_broker_list" = "broker:9094",
+    "kafka_topic" = "transactions",
+    "kafka_partitions" = "0",
+    "kafka_offsets" = "OFFSET_BEGINNING"
+);
+
+select * from accounting.transactions;
+```
 
 # Other files
 

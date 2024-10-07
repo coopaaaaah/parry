@@ -14,6 +14,7 @@ mysqlclient = "^2.2.4"
 python-dotenv = "^1.0.1"
 faker = "^28.4.1"
 kafka-python = "^2.0.2"
+kafka-python-ng = "^2.2.3"
 
 [build-system]
 requires = ["poetry-core"]
